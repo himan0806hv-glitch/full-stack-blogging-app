@@ -81,55 +81,25 @@ pipeline {
 
     stages {
 
+        pipeline {
+    agent any
+
+    stages {
+
         stage('K8s Deploy') {
             steps {
-                withKubeCredentials(kubectlCredentials: [[
-                    caCertificate: '',
-                    clusterName: 'devopsshack-cluster',
-                    contextName: '',
-                    credentialsId: 'k8s-token',
-                    namespace: 'webapps',
-                    serverUrl: 'https://16264535E6F5946E107B618B1CD20BBA.gr7.us-east-1.eks.amazonaws.com'
-                ]]) {
-                    sh '''
-                    export AWS_DEFAULT_REGION=us-east-1
-                    export KUBECONFIG=/var/lib/jenkins/.kube/config
-
-                    aws eks update-kubeconfig --name devopsshack-cluster
-
-                    kubectl get nodes
-                    kubectl apply -f deployment-service.yml -n webapps
-                    '''
-                    sleep 20
-                }
+                // your code
             }
         }
 
         stage('Verify Deployment') {
             steps {
-                withKubeCredentials(kubectlCredentials: [[
-                    caCertificate: '',
-                    clusterName: 'devopsshack-cluster',
-                    contextName: '',
-                    credentialsId: 'k8s-token',
-                    namespace: 'webapps',
-                    serverUrl: 'https://16264535E6F5946E107B618B1CD20BBA.gr7.us-east-1.eks.amazonaws.com'
-                ]]) {
-                    sh '''
-                    export AWS_DEFAULT_REGION=us-east-1
-                    export KUBECONFIG=/var/lib/jenkins/.kube/config
-
-                    aws eks update-kubeconfig --name devopsshack-cluster
-
-                    kubectl get pods -n webapps
-                    kubectl get svc -n webapps
-                    '''
-                }
+                // your code
             }
         }
     }
 
-    post {   // ✅ NOW INSIDE PIPELINE
+    post {
         always {
             script {
                 def jobName = env.JOB_NAME
@@ -155,7 +125,7 @@ pipeline {
                 emailext(
                     subject: "Jenkins Build ${pipelineStatus}: ${jobName}",
                     body: body,
-                    to: "himanshu0806.hvgmail.com",
+                    to: "himanshu0806.hv@gmail.com",
                     mimeType: 'text/html'
                 )
             }
