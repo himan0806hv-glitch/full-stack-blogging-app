@@ -76,82 +76,92 @@ pipeline {
                 }
             }
         }
-       stage('K8s Deploy') {
-    steps {
-        withKubeCredentials(kubectlCredentials: [[
-            caCertificate: '',
-            clusterName: 'devopsshack-cluster',
-            contextName: '',
-            credentialsId: 'k8s-token',
-            namespace: 'webapps',
-            serverUrl: 'https://16264535E6F5946E107B618B1CD20BBA.gr7.us-east-1.eks.amazonaws.com'
-        ]]) {
-            sh '''
-            export AWS_DEFAULT_REGION=us-east-1
-            
-            # 🔥 FORCE correct kubeconfig location
-            export KUBECONFIG=/var/lib/jenkins/.kube/config
-            
-            aws eks update-kubeconfig --name devopsshack-cluster
-            
-            kubectl get nodes
-            kubectl apply -f deployment-service.yml -n webapps
-            '''
-            sleep 20
+pipeline {
+    agent any
+
+    stages {
+
+        stage('K8s Deploy') {
+            steps {
+                withKubeCredentials(kubectlCredentials: [[
+                    caCertificate: '',
+                    clusterName: 'devopsshack-cluster',
+                    contextName: '',
+                    credentialsId: 'k8s-token',
+                    namespace: 'webapps',
+                    serverUrl: 'https://16264535E6F5946E107B618B1CD20BBA.gr7.us-east-1.eks.amazonaws.com'
+                ]]) {
+                    sh '''
+                    export AWS_DEFAULT_REGION=us-east-1
+                    export KUBECONFIG=/var/lib/jenkins/.kube/config
+
+                    aws eks update-kubeconfig --name devopsshack-cluster
+
+                    kubectl get nodes
+                    kubectl apply -f deployment-service.yml -n webapps
+                    '''
+                    sleep 20
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                withKubeCredentials(kubectlCredentials: [[
+                    caCertificate: '',
+                    clusterName: 'devopsshack-cluster',
+                    contextName: '',
+                    credentialsId: 'k8s-token',
+                    namespace: 'webapps',
+                    serverUrl: 'https://16264535E6F5946E107B618B1CD20BBA.gr7.us-east-1.eks.amazonaws.com'
+                ]]) {
+                    sh '''
+                    export AWS_DEFAULT_REGION=us-east-1
+                    export KUBECONFIG=/var/lib/jenkins/.kube/config
+
+                    aws eks update-kubeconfig --name devopsshack-cluster
+
+                    kubectl get pods -n webapps
+                    kubectl get svc -n webapps
+                    '''
+                }
+            }
+        }
+    }
+
+    post {   // ✅ NOW INSIDE PIPELINE
+        always {
+            script {
+                def jobName = env.JOB_NAME
+                def buildNumber = env.BUILD_NUMBER
+                def pipelineStatus = currentBuild.result ?: 'UNKNOWN'
+                pipelineStatus = pipelineStatus.toUpperCase()
+
+                def bannerColor = pipelineStatus == 'SUCCESS' ? 'green' : 'red'
+
+                def body = """
+                <body>
+                    <div style="border: 2px solid ${bannerColor}; padding: 10px;">
+                        <h3 style="color: ${bannerColor};">
+                            Pipeline Status: ${pipelineStatus}
+                        </h3>
+                        <p>Job: ${jobName}</p>
+                        <p>Build Number: ${buildNumber}</p>
+                        <p>Status: ${pipelineStatus}</p>
+                    </div>
+                </body>
+                """
+
+                emailext(
+                    subject: "Jenkins Build ${pipelineStatus}: ${jobName}",
+                    body: body,
+                    to: "your-email@gmail.com",
+                    mimeType: 'text/html'
+                )
+            }
         }
     }
 }
-
-stage('Verify Deployment') {
-    steps {
-        withKubeCredentials(kubectlCredentials: [[
-            caCertificate: '',
-            clusterName: 'devopsshack-cluster',
-            contextName: '',
-            credentialsId: 'k8s-token',
-            namespace: 'webapps',
-            serverUrl: 'https://16264535E6F5946E107B618B1CD20BBA.gr7.us-east-1.eks.amazonaws.com'
-        ]]) {
-            sh '''
-            export AWS_DEFAULT_REGION=us-east-1
-            export KUBECONFIG=/var/lib/jenkins/.kube/config
-            
-            aws eks update-kubeconfig --name devopsshack-cluster
-            
-            kubectl get pods -n webapps
-            kubectl get svc -n webapps
-            '''
-        }
-    }
-}
-        
-    }  // Closing stages
-}  // Closing pipeline
-post {
-    always {
-        script {
-            // Get job name, build number, and pipeline status
-            def jobName = env.JOB_NAME
-            def buildNumber = env.BUILD_NUMBER
-            def pipelineStatus = currentBuild.result ?: 'UNKNOWN'
-            pipelineStatus = pipelineStatus.toUpperCase()
-            
-            // Set the banner color based on the status
-            def bannerColor = pipelineStatus == 'SUCCESS' ? 'green' : 'red'
-
-            // HTML body for the email
-            def body = """
-            <body>
-                <div style="border: 2px solid ${bannerColor}; padding: 10px;">
-                    <h3 style="color: ${bannerColor};">
-                        Pipeline Status: ${pipelineStatus}
-                    </h3>
-                    <p>Job: ${jobName}</p>
-                    <p>Build Number: ${buildNumber}</p>
-                    <p>Status: ${pipelineStatus}</p>
-                </div>
-            </body>
-            """
 
             // Send email notification
             emailext(
