@@ -155,7 +155,7 @@ pipeline {
                 emailext(
                     subject: "Jenkins Build ${pipelineStatus}: ${jobName}",
                     body: body,
-                    to: "your-email@gmail.com",
+                    to: "himanshu0806.hvgmail.com",
                     mimeType: 'text/html'
                 )
             }
