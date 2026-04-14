@@ -57,14 +57,14 @@ pipeline {
             steps {
                 script{
                 withDockerRegistry(credentialsId: 'dockerhub', url: 'https://index.docker.io/v1/') {
-                sh "docker build -t himan0806hv/glitch-blogging-app ."
+                sh "docker build -t himan0812/blogging-app:latest ."
                 }
                 }
             }
         }
         stage('Trivy Image Scan') {
             steps {
-                sh "trivy image --format table -o image.html himan0806hv/glitch-blogging-app:latest"
+                sh "trivy image --format table -o image.html himan0812/blogging-app:latest"
             }
         }
         stage('Docker Push Image') {
