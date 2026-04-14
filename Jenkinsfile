@@ -24,14 +24,23 @@ pipeline {
                 sh "trivy fs . --format table -o fs.html"
             }
         }
+        stage('Copy Dependencies') {
+    steps {
+        sh 'mvn dependency:copy-dependencies -DoutputDirectory=target/dependency'
+    }
+}
         stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonarqubeserver') {
-                    sh '''$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Blogging-app -Dsonar.projectKey=Blogging-app \
-                          -Dsonar.java.binaries=target'''
-                }
-            }
+    steps {
+        withSonarQubeEnv('sonarqubeserver') {
+            sh '''$SCANNER_HOME/bin/sonar-scanner \
+                  -Dsonar.projectName=Blogging-app \
+                  -Dsonar.projectKey=Blogging-app \
+                  -Dsonar.java.binaries=target/classes \
+                  -Dsonar.java.libraries=target/dependency/*.jar \
+                  -Dsonar.exclusions=target/**,fs.html'''
         }
+    }
+}
         stage('Build') {
             steps {
                 sh "mvn package"
@@ -47,7 +56,7 @@ pipeline {
         stage('Docker Build & Tag') {
             steps {
                 script{
-                withDockerRegistry(credentialsId: 'dockerhub-cred', url: 'https://index.docker.io/v1/') {
+                withDockerRegistry(credentialsId: 'dockerhub', url: 'https://index.docker.io/v1/') {
                 sh "docker build -t himan0806hv/glitch-blogging-app ."
                 }
                 }
@@ -61,7 +70,7 @@ pipeline {
         stage('Docker Push Image') {
             steps {
                 script{
-                withDockerRegistry(credentialsId: 'dockerhub-cred', url: 'https://index.docker.io/v1/') {
+                withDockerRegistry(credentialsId: 'dockerhub', url: 'https://index.docker.io/v1/') {
                     sh "docker push himan0812/blogging-app:latest"
                 }
                 }
