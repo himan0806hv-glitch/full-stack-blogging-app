@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage('Git Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/ougabriel/full-stack-blogging-app.git'
+                git branch: 'main', url: 'https://github.com/himan0806hv-glitch/full-stack-blogging-app.git'
             }
         }
         stage('Compile') {
@@ -48,21 +48,21 @@ pipeline {
             steps {
                 script{
                 withDockerRegistry(credentialsId: 'dockerhub-cred', url: 'https://index.docker.io/v1/') {
-                sh "docker build -t ugogabriel/gab-blogging-app ."
+                sh "docker build -t himan0806hv/glitch-blogging-app ."
                 }
                 }
             }
         }
         stage('Trivy Image Scan') {
             steps {
-                sh "trivy image --format table -o image.html ugogabriel/gab-blogging-app:latest"
+                sh "trivy image --format table -o image.html himan0806hv/glitch-blogging-app:latest"
             }
         }
         stage('Docker Push Image') {
             steps {
                 script{
                 withDockerRegistry(credentialsId: 'dockerhub-cred', url: 'https://index.docker.io/v1/') {
-                    sh "docker push ugogabriel/gab-blogging-app"
+                    sh "docker push himan0812/blogging-app:latest"
                 }
                 }
             }
@@ -116,9 +116,9 @@ post {
             emailext(
                 subject: "${jobName} - Build ${buildNumber} - ${pipelineStatus}",
                 body: body,
-                to: 'ougabriel@gmail.com',
-                from: 'jenkins@example.com',
-                replyTo: 'jenkins@example.com',
+                to: 'himan0806.hv.com',
+                from: 'himanshu0806.hv.com',
+                replyTo: 'himanshu0806.hv.com',
                 mimeType: 'text/html'
             )
         }

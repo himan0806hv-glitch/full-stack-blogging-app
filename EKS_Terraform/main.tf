@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "eu-west-2"
+  region = "us-east-1"
 }
 
 resource "aws_vpc" "devopsshack_vpc" {
@@ -14,7 +14,7 @@ resource "aws_subnet" "devopsshack_subnet" {
   count = 2
   vpc_id                  = aws_vpc.devopsshack_vpc.id
   cidr_block              = cidrsubnet(aws_vpc.devopsshack_vpc.cidr_block, 8, count.index)
-  availability_zone       = element(["eu-west-2a", "eu-west-2c"], count.index)
+  availability_zone       = element(["us-east-1a", "us-east-1b"], count.index)
   map_public_ip_on_launch = true
 
   tags = {
@@ -108,7 +108,7 @@ resource "aws_eks_node_group" "devopsshack" {
     min_size     = 3
   }
 
-  instance_types = ["t2.large"]
+  instance_types = ["m7i-flex.large"]
 
   remote_access {
     ec2_ssh_key = var.ssh_key_name
